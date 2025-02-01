@@ -1,145 +1,33 @@
 <!DOCTYPE html>
-<html>
+<html lang="de">
 <head>
-    <title>Funktionierendes Snake-Spiel</title>
-    <style>
-        canvas {
-            border: 2px solid #0f0;
-            background: #000;
-        }
-        body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background: #111;
-            color: #0f0;
-            font-family: Arial;
-        }
-        button {
-            padding: 10px 20px;
-            margin: 10px;
-            background: #000;
-            color: #0f0;
-            border: 2px solid #0f0;
-            cursor: pointer;
-        }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meine Aktienseite</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Snake-Spiel</h1>
-    <div>Score: <span id="score">0</span></div>
-    <canvas id="gameCanvas" width="400" height="400"></canvas>
-    <button onclick="startGame()">Spiel starten</button>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="#meine-aktien">Meine Aktien</a></li>
+                <li><a href="#watchlist">Watchlist</a></li>
+            </ul>
+        </nav>
+    </header>
 
-    <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const GRID_SIZE = 20;
-        let snake = [];
-        let food = {};
-        let dx = GRID_SIZE;
-        let dy = 0;
-        let score = 0;
-        let gameLoop;
+    <main>
+        <section id="meine-aktien">
+            <h1>Meine Aktien</h1>
+            <p>Hier siehst du deine aktuellen Aktien.</p>
+        </section>
 
-        function initGame() {
-            snake = [
-                {x: 200, y: 200},
-                {x: 180, y: 200},
-                {x: 160, y: 200}
-            ];
-            spawnFood();
-            dx = GRID_SIZE;
-            dy = 0;
-            score = 0;
-            document.getElementById('score').textContent = score;
-        }
+        <section id="watchlist" class="hidden">
+            <h1>Watchlist</h1>
+            <p>Hier siehst du deine Watchlist.</p>
+        </section>
+    </main>
 
-        function spawnFood() {
-            food = {
-                x: Math.floor(Math.random() * (canvas.width/GRID_SIZE)) * GRID_SIZE,
-                y: Math.floor(Math.random() * (canvas.height/GRID_SIZE)) * GRID_SIZE
-            };
-        }
-
-        function drawGame() {
-            // Bewegung
-            const head = {x: snake[0].x + dx, y: snake[0].y + dy};
-            
-            // Kollisionsprüfung
-            if (head.x < 0 || head.x >= canvas.width || 
-                head.y < 0 || head.y >= canvas.height ||
-                snake.some(segment => segment.x === head.x && segment.y === head.y)) {
-                gameOver();
-                return;
-            }
-
-            snake.unshift(head);
-
-            // Futter einsammeln
-            if (head.x === food.x && head.y === food.y) {
-                score += 10;
-                document.getElementById('score').textContent = score;
-                spawnFood();
-            } else {
-                snake.pop();
-            }
-
-            // Zeichnen
-            ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Schlange
-            ctx.fillStyle = '#0f0';
-            snake.forEach(segment => {
-                ctx.fillRect(segment.x, segment.y, GRID_SIZE-2, GRID_SIZE-2);
-            });
-
-            // Futter
-            ctx.fillStyle = '#f00';
-            ctx.fillRect(food.x, food.y, GRID_SIZE-2, GRID_SIZE-2);
-        }
-
-        function gameOver() {
-            clearInterval(gameLoop);
-            alert(Game Over! Score: ${score});
-        }
-
-        function startGame() {
-            initGame();
-            clearInterval(gameLoop);
-            gameLoop = setInterval(drawGame, 100);
-        }
-
-        // Tastatursteuerung
-        document.addEventListener('keydown', (e) => {
-            switch(e.key) {
-                case 'ArrowUp':
-                    if (dy === 0) {
-                        dx = 0;
-                        dy = -GRID_SIZE;
-                    }
-                    break;
-                case 'ArrowDown':
-                    if (dy === 0) {
-                        dx = 0;
-                        dy = GRID_SIZE;
-                    }
-                    break;
-                case 'ArrowLeft':
-                    if (dx === 0) {
-                        dx = -GRID_SIZE;
-                        dy = 0;
-                    }
-                    break;
-                case 'ArrowRight':
-                    if (dx === 0) {
-                        dx = GRID_SIZE;
-                        dy = 0;
-                    }
-                    break;
-            }
-        });
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
