@@ -10,6 +10,8 @@ header {
     background-color: #ffffff;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     padding: 10px 20px;
+    border-radius: 12px;
+    margin: 20px;
 }
 
 nav ul {
@@ -27,10 +29,19 @@ nav ul li a {
     text-decoration: none;
     color: #1d1d1f;
     font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 8px;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 nav ul li a:hover {
-    color: #007aff;
+    background-color: #007aff;
+    color: #ffffff;
+}
+
+nav ul li a.active {
+    background-color: #007aff;
+    color: #ffffff;
 }
 
 main {
@@ -39,4 +50,22 @@ main {
 
 .hidden {
     display: none;
+}
+
+section {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin: 20px;
+}
+
+h1 {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+p {
+    font-size: 16px;
+    color: #6e6e73;
 }
