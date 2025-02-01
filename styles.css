@@ -1,17 +1,43 @@
+/* Systemabhängige Farben */
+:root {
+    --background: #ffffff;
+    --text: #1d1d1f;
+    --header-background: #f5f5f7;
+    --section-background: #ffffff;
+    --border: #e0e0e0;
+    --active-background: rgba(0, 0, 0, 0.05);
+    --active-border: rgba(0, 0, 0, 0.1);
+    --shadow: rgba(0, 0, 0, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --background: #000000; /* Echtes Schwarz für OLED */
+        --text: #ffffff;
+        --header-background: #1c1c1e;
+        --section-background: #1c1c1e;
+        --border: #2c2c2e;
+        --active-background: rgba(255, 255, 255, 0.1);
+        --active-border: rgba(255, 255, 255, 0.2);
+        --shadow: rgba(255, 255, 255, 0.1);
+    }
+}
+
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #f5f5f7;
-    color: #1d1d1f;
+    background-color: var(--background);
+    color: var(--text);
     display: flex;
     flex-direction: column;
     align-items: center;
+    min-height: 100vh;
 }
 
 header {
-    background-color: #ffffff;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background-color: var(--header-background);
+    box-shadow: 0 2px 4px var(--shadow);
     padding: 10px 20px;
     border-radius: 12px;
     margin: 20px 0;
@@ -32,22 +58,22 @@ nav ul li {
 
 nav ul li a {
     text-decoration: none;
-    color: #1d1d1f;
+    color: var(--text);
     font-weight: 500;
     padding: 8px 16px;
     border-radius: 8px;
-    transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+    transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 nav ul li a:hover {
-    background-color: rgba(0, 0, 0, 0.05); /* Sehr helles Grau */
+    background-color: var(--active-background);
     transform: scale(1.05);
 }
 
 nav ul li a.active {
-    background-color: rgba(0, 0, 0, 0.05); /* Sehr helles Grau */
-    border: 1px solid rgba(0, 0, 0, 0.1); /* Dünner Rahmen */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Leichter Schatten */
+    background-color: var(--active-background);
+    border: 1px solid var(--active-border);
+    box-shadow: 0 2px 4px var(--shadow);
 }
 
 main {
@@ -61,13 +87,13 @@ main {
 }
 
 section {
-    background-color: #ffffff;
+    background-color: var(--section-background);
     padding: 20px;
     border-radius: 12px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px var(--shadow);
     margin: 20px 0;
     animation: fadeIn 0.5s ease-in-out;
-    width: 100%; /* Gleiche Breite wie der Header */
+    width: 100%;
 }
 
 @keyframes fadeIn {
@@ -88,5 +114,6 @@ h1 {
 
 p {
     font-size: 16px;
-    color: #6e6e73;
+    color: var(--text);
+    opacity: 0.8;
 }
