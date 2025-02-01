@@ -1,7 +1,9 @@
 document.addEventListener('DOMContentLoaded', function() {
     const links = document.querySelectorAll('nav ul li a');
     const sections = document.querySelectorAll('main section');
-    const API_KEY = 'QS58IEEF80QDBT3Y'; // Dein API-Schlüssel
+    // Finnhub-Authentifizierung: Alle Requests werden mit dem Header "X-Finnhub-Secret" authentifiziert.
+    // Dein gegebener Header-Wert: "cuf1sbpr01qno7m4nuv0"
+    const FINNHUB_SECRET = 'cuf1sbpr01qno7m4nuv0';
 
     // Fehlerbereich dynamisch erstellen
     const errorMessageEl = document.createElement('div');
@@ -74,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function() {
         for (const stock of stocks) {
             try {
                 const rsi = await getRSI(stock.symbol);
-                // Filter: Beispielweise nur anzeigen, wenn der RSI zwischen 25 und 35 liegt
+                // Beispiel: Filtere RSI, der zwischen 25 und 35 liegt (anpassbar)
                 if (rsi !== null && rsi >= 25 && rsi <= 35) {
                     addTableRow(watchlistBody, stock.symbol, stock.name, rsi.toFixed(2));
                 } else {
@@ -87,74 +89,29 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Versucht, den RSI direkt über den Alpha Vantage RSI-Endpunkt abzurufen.
-    // Falls keine Daten vorhanden sind, wird ein Fallback zur Berechnung anhand von Tagesdaten genutzt.
+    // Holt den RSI-Wert via Finnhub API
     async function getRSI(symbol) {
-        const urlRSI = `https://www.alphavantage.co/query?function=RSI&symbol=${symbol}&interval=weekly&time_period=260&series_type=close&apikey=${API_KEY}`;
-        const response = await fetch(urlRSI);
+        // Definiere den Zeitraum: z.B. die letzten 90 Tage
+        const now = Math.floor(Date.now() / 1000);
+        const from = now - (90 * 24 * 3600);
+        // Baue die Finnhub-API-URL; beachte, dass der API-Key hier nicht als Query-Parameter, sondern über den Header gesendet wird.
+        const url = `https://finnhub.io/api/v1/indicator?symbol=${symbol}&resolution=D&from=${from}&to=${now}&indicator=rsi&timeperiod=14`;
+        const response = await fetch(url, {
+            headers: {
+                "X-Finnhub-Secret": FINNHUB_SECRET
+            }
+        });
         if (!response.ok) {
-            throw new Error(`HTTP-Fehler beim RSI-Aufruf: ${response.status}`);
+            throw new Error(`HTTP-Fehler: ${response.status}`);
         }
         const data = await response.json();
-        if (data && data['Technical Analysis: RSI']) {
-            const dates = Object.keys(data['Technical Analysis: RSI']);
-            if (dates.length > 0) {
-                return parseFloat(data['Technical Analysis: RSI'][dates[0]].RSI);
-            }
+        // Überprüfe, ob das Antwortobjekt ein Array mit RSI-Werten enthält (Feld "c")
+        if (data && data.c && data.c.length > 0) {
+            // Nehme den letzten Wert als aktuellen RSI
+            return parseFloat(data.c[data.c.length - 1]);
+        } else {
+            throw new Error(`Keine RSI-Daten für ${symbol} erhalten.`);
         }
-        // Fallback: Berechne den RSI aus Tageskursdaten
-        return await computeRSIFromDaily(symbol);
-    }
-
-    // Holt Tageskursdaten und berechnet daraus den RSI (Standardperiode 14)
-    async function computeRSIFromDaily(symbol) {
-        const dailyUrl = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${symbol}&apikey=${API_KEY}&outputsize=compact`;
-        const response = await fetch(dailyUrl);
-        if (!response.ok) {
-            throw new Error(`HTTP-Fehler beim Tagesdaten-Aufruf: ${response.status}`);
-        }
-        const data = await response.json();
-        if (!data["Time Series (Daily)"]) {
-            throw new Error(`Keine Tagesdaten für ${symbol} gefunden.`);
-        }
-        const timeSeries = data["Time Series (Daily)"];
-        // Sortiere die Daten chronologisch (älteste zuerst)
-        const dates = Object.keys(timeSeries).sort();
-        const closes = dates.map(date => parseFloat(timeSeries[date]["4. close"]));
-        const period = 14;
-        if (closes.length < period + 1) {
-            throw new Error("Nicht genügend Daten, um den RSI zu berechnen.");
-        }
-        return calculateRSI(closes, period);
-    }
-
-    // Berechnet den RSI anhand eines Arrays von Schlusskursen und einer Periode
-    function calculateRSI(closes, period) {
-        let gains = 0, losses = 0;
-        // Initiale Berechnung (einfacher Durchschnitt)
-        for (let i = 1; i <= period; i++) {
-            const change = closes[i] - closes[i - 1];
-            if (change > 0) {
-                gains += change;
-            } else {
-                losses += Math.abs(change);
-            }
-        }
-        let avgGain = gains / period;
-        let avgLoss = losses / period;
-        let rs = avgLoss === 0 ? 100 : avgGain / avgLoss;
-        let rsi = 100 - (100 / (1 + rs));
-        // Exponentielle Glättung für alle weiteren Tage
-        for (let i = period + 1; i < closes.length; i++) {
-            const change = closes[i] - closes[i - 1];
-            const gain = change > 0 ? change : 0;
-            const loss = change < 0 ? Math.abs(change) : 0;
-            avgGain = ((avgGain * (period - 1)) + gain) / period;
-            avgLoss = ((avgLoss * (period - 1)) + loss) / period;
-            rs = avgLoss === 0 ? 100 : avgGain / avgLoss;
-            rsi = 100 - (100 / (1 + rs));
-        }
-        return rsi;
     }
 
     // Hilfsfunktion zum Hinzufügen einer Tabellenzeile
@@ -164,7 +121,7 @@ document.addEventListener('DOMContentLoaded', function() {
         tbody.appendChild(row);
     }
 
-    // Zeigt eine Fehlermeldung an
+    // Zeigt eine Fehlermeldung im Fehlerbereich an
     function showError(message) {
         console.error(message);
         errorMessageEl.style.display = 'block';
