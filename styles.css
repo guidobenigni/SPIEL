@@ -4,6 +4,9 @@ body {
     padding: 0;
     background-color: #f5f5f7;
     color: #1d1d1f;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 header {
@@ -11,7 +14,9 @@ header {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     padding: 10px 20px;
     border-radius: 12px;
-    margin: 20px;
+    margin: 20px 0;
+    width: 90%;
+    max-width: 800px;
 }
 
 nav ul {
@@ -35,19 +40,21 @@ nav ul li a {
 }
 
 nav ul li a:hover {
-    background-color: #007aff;
-    color: #ffffff;
+    background-color: rgba(0, 122, 255, 0.1); /* Dezenteres Blau */
+    color: #007aff;
     transform: scale(1.05);
 }
 
 nav ul li a.active {
-    background-color: #007aff;
-    color: #ffffff;
-    box-shadow: 0 4px 6px rgba(0, 122, 255, 0.2);
+    background-color: rgba(0, 122, 255, 0.1); /* Dezenteres Blau */
+    color: #007aff;
+    box-shadow: 0 4px 6px rgba(0, 122, 255, 0.1);
 }
 
 main {
     padding: 20px;
+    width: 90%;
+    max-width: 800px;
 }
 
 .hidden {
@@ -59,7 +66,7 @@ section {
     padding: 20px;
     border-radius: 12px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    margin: 20px;
+    margin: 20px 0;
     animation: fadeIn 0.5s ease-in-out;
 }
 
