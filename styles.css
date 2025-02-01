@@ -40,15 +40,14 @@ nav ul li a {
 }
 
 nav ul li a:hover {
-    background-color: rgba(0, 122, 255, 0.1); /* Dezenteres Blau */
-    color: #007aff;
+    background-color: rgba(0, 0, 0, 0.05); /* Sehr helles Grau */
     transform: scale(1.05);
 }
 
 nav ul li a.active {
-    background-color: rgba(0, 122, 255, 0.1); /* Dezenteres Blau */
-    color: #007aff;
-    box-shadow: 0 4px 6px rgba(0, 122, 255, 0.1);
+    background-color: rgba(0, 0, 0, 0.05); /* Sehr helles Grau */
+    border: 1px solid rgba(0, 0, 0, 0.1); /* Dünner Rahmen */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Leichter Schatten */
 }
 
 main {
@@ -68,6 +67,7 @@ section {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     margin: 20px 0;
     animation: fadeIn 0.5s ease-in-out;
+    width: 100%; /* Gleiche Breite wie der Header */
 }
 
 @keyframes fadeIn {
