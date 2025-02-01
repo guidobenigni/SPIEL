@@ -1,9 +1,9 @@
 document.addEventListener('DOMContentLoaded', function() {
     const links = document.querySelectorAll('nav ul li a');
     const sections = document.querySelectorAll('main section');
-    const API_KEY = 'QS58IEEF80QDBT3Y'; // 🔑 Dein API-Schlüssel
+    const API_KEY = 'QS58IEEF80QDBT3Y'; // Dein API-Schlüssel
 
-    // Erstelle einen Fehlerbereich und füge ihn dem Dokument hinzu
+    // Fehlerbereich dynamisch erstellen
     const errorMessageEl = document.createElement('div');
     errorMessageEl.id = 'error-message';
     errorMessageEl.style.display = 'none';
@@ -19,23 +19,16 @@ document.addEventListener('DOMContentLoaded', function() {
         link.addEventListener('click', function(event) {
             event.preventDefault();
             const targetId = this.getAttribute('href').substring(1);
-
-            // Sektionen verwalten
             sections.forEach(section => section.classList.add('hidden'));
             document.getElementById(targetId).classList.remove('hidden');
-
-            // Aktive Klasse setzen
             links.forEach(link => link.classList.remove('active'));
             this.classList.add('active');
-
-            // Watchlist laden, falls angeklickt
             if (targetId === 'watchlist') loadWatchlist();
         });
     });
 
-    // Watchlist laden
+    // Vollständige Aktienliste (S&P 500, DAX, CAC 40, Dow Jones, ATX)
     async function loadWatchlist() {
-        // Alle Symbole, wie ursprünglich verwendet
         const stocks = [
             // S&P 500
             { symbol: 'AAPL', name: 'Apple' },
@@ -74,90 +67,111 @@ document.addEventListener('DOMContentLoaded', function() {
             { symbol: 'VOE', name: 'Voestalpine' }
         ];
 
-        // Fehlerbereich zurücksetzen und Tabelle leeren
-        hideError();
         const watchlistBody = document.querySelector('#watchlist-table tbody');
-        watchlistBody.innerHTML = '';
+        watchlistBody.innerHTML = ''; // Tabelle leeren
+        hideError();
 
-        // Erstelle eine Warteschlange für API-Aufrufe
-        const queue = [];
-        let isProcessing = false;
-
-        // Füge alle Aufgaben (API-Aufrufe) der Warteschlange hinzu
-        stocks.forEach(stock => {
-            queue.push(() => processStock(stock, watchlistBody));
-        });
-
-        processQueue();
-
-        // Verarbeitet die Aufgaben aus der Warteschlange mit einer Pause von 12 Sekunden zwischen den Aufrufen
-        async function processQueue() {
-            if (isProcessing || queue.length === 0) return;
-            isProcessing = true;
-
-            // Bis zu 5 API-Aufrufe pro Durchgang (also ca. 1 pro 12 Sekunden)
-            for (let i = 0; i < 5 && queue.length > 0; i++) {
-                const task = queue.shift();
-                await task();
-                await new Promise(resolve => setTimeout(resolve, 12000)); // 12 Sekunden warten
-            }
-
-            isProcessing = false;
-            if (queue.length > 0) processQueue();
-        }
-
-        // Verarbeitet ein einzelnes Symbol
-        async function processStock(stock, tbody) {
+        for (const stock of stocks) {
             try {
                 const rsi = await getRSI(stock.symbol);
-                // Filter: Zeige nur, wenn der RSI zwischen 25 und 35 liegt
-                if (rsi >= 25 && rsi <= 35) {
-                    const row = `
-                        <tr>
-                            <td>${stock.symbol}</td>
-                            <td>${stock.name}</td>
-                            <td>${rsi.toFixed(2)}</td>
-                        </tr>
-                    `;
-                    tbody.innerHTML += row;
+                // Filter: Beispielweise nur anzeigen, wenn der RSI zwischen 25 und 35 liegt
+                if (rsi !== null && rsi >= 25 && rsi <= 35) {
+                    addTableRow(watchlistBody, stock.symbol, stock.name, rsi.toFixed(2));
+                } else {
+                    addTableRow(watchlistBody, stock.symbol, stock.name, rsi !== null ? rsi.toFixed(2) : 'N/A');
                 }
             } catch (error) {
-                showError(`Fehler bei ${stock.symbol}: ${error.message || error}`);
+                showError(`Fehler bei ${stock.symbol}: ${error.message}`);
+                addTableRow(watchlistBody, stock.symbol, stock.name, 'Fehler');
             }
         }
     }
 
-    // Ruft den RSI-Wert von der API ab (RSI über 260 Wochen)
+    // Versucht, den RSI direkt über den Alpha Vantage RSI-Endpunkt abzurufen.
+    // Falls keine Daten vorhanden sind, wird ein Fallback zur Berechnung anhand von Tagesdaten genutzt.
     async function getRSI(symbol) {
-        const url = `https://www.alphavantage.co/query?function=RSI&symbol=${symbol}&interval=weekly&time_period=260&series_type=close&apikey=${API_KEY}`;
-        const response = await fetch(url);
+        const urlRSI = `https://www.alphavantage.co/query?function=RSI&symbol=${symbol}&interval=weekly&time_period=260&series_type=close&apikey=${API_KEY}`;
+        const response = await fetch(urlRSI);
         if (!response.ok) {
-            throw new Error(`HTTP-Fehler: ${response.status}`);
+            throw new Error(`HTTP-Fehler beim RSI-Aufruf: ${response.status}`);
         }
         const data = await response.json();
-
-        // Überprüfen, ob die erwarteten RSI-Daten vorhanden sind
-        if (!data || !data['Technical Analysis: RSI']) {
-            throw new Error(`Keine RSI-Daten für ${symbol}`);
+        if (data && data['Technical Analysis: RSI']) {
+            const dates = Object.keys(data['Technical Analysis: RSI']);
+            if (dates.length > 0) {
+                return parseFloat(data['Technical Analysis: RSI'][dates[0]].RSI);
+            }
         }
-
-        // Extrahiere den neuesten RSI-Wert
-        const dates = Object.keys(data['Technical Analysis: RSI']);
-        if (dates.length === 0) {
-            throw new Error(`Keine RSI-Daten für ${symbol}`);
-        }
-        const latestDate = dates[0];
-        return parseFloat(data['Technical Analysis: RSI'][latestDate].RSI);
+        // Fallback: Berechne den RSI aus Tageskursdaten
+        return await computeRSIFromDaily(symbol);
     }
 
-    // Zeige eine Fehlermeldung im Fehlerbereich an
+    // Holt Tageskursdaten und berechnet daraus den RSI (Standardperiode 14)
+    async function computeRSIFromDaily(symbol) {
+        const dailyUrl = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${symbol}&apikey=${API_KEY}&outputsize=compact`;
+        const response = await fetch(dailyUrl);
+        if (!response.ok) {
+            throw new Error(`HTTP-Fehler beim Tagesdaten-Aufruf: ${response.status}`);
+        }
+        const data = await response.json();
+        if (!data["Time Series (Daily)"]) {
+            throw new Error(`Keine Tagesdaten für ${symbol} gefunden.`);
+        }
+        const timeSeries = data["Time Series (Daily)"];
+        // Sortiere die Daten chronologisch (älteste zuerst)
+        const dates = Object.keys(timeSeries).sort();
+        const closes = dates.map(date => parseFloat(timeSeries[date]["4. close"]));
+        const period = 14;
+        if (closes.length < period + 1) {
+            throw new Error("Nicht genügend Daten, um den RSI zu berechnen.");
+        }
+        return calculateRSI(closes, period);
+    }
+
+    // Berechnet den RSI anhand eines Arrays von Schlusskursen und einer Periode
+    function calculateRSI(closes, period) {
+        let gains = 0, losses = 0;
+        // Initiale Berechnung (einfacher Durchschnitt)
+        for (let i = 1; i <= period; i++) {
+            const change = closes[i] - closes[i - 1];
+            if (change > 0) {
+                gains += change;
+            } else {
+                losses += Math.abs(change);
+            }
+        }
+        let avgGain = gains / period;
+        let avgLoss = losses / period;
+        let rs = avgLoss === 0 ? 100 : avgGain / avgLoss;
+        let rsi = 100 - (100 / (1 + rs));
+        // Exponentielle Glättung für alle weiteren Tage
+        for (let i = period + 1; i < closes.length; i++) {
+            const change = closes[i] - closes[i - 1];
+            const gain = change > 0 ? change : 0;
+            const loss = change < 0 ? Math.abs(change) : 0;
+            avgGain = ((avgGain * (period - 1)) + gain) / period;
+            avgLoss = ((avgLoss * (period - 1)) + loss) / period;
+            rs = avgLoss === 0 ? 100 : avgGain / avgLoss;
+            rsi = 100 - (100 / (1 + rs));
+        }
+        return rsi;
+    }
+
+    // Hilfsfunktion zum Hinzufügen einer Tabellenzeile
+    function addTableRow(tbody, symbol, name, rsi) {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td>${symbol}</td><td>${name}</td><td>${rsi}</td>`;
+        tbody.appendChild(row);
+    }
+
+    // Zeigt eine Fehlermeldung an
     function showError(message) {
         console.error(message);
         errorMessageEl.style.display = 'block';
         errorMessageEl.textContent = message;
     }
 
-    // Verstecke den Fehlerbereich
+    // Versteckt den Fehlerbereich
     function hideError() {
         errorMessageEl.style.display = 'none';
         errorMessageEl.textContent = '';
