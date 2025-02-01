@@ -31,17 +31,19 @@ nav ul li a {
     font-weight: 500;
     padding: 8px 16px;
     border-radius: 8px;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
 }
 
 nav ul li a:hover {
     background-color: #007aff;
     color: #ffffff;
+    transform: scale(1.05);
 }
 
 nav ul li a.active {
     background-color: #007aff;
     color: #ffffff;
+    box-shadow: 0 4px 6px rgba(0, 122, 255, 0.2);
 }
 
 main {
@@ -58,6 +60,18 @@ section {
     border-radius: 12px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     margin: 20px;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 h1 {
