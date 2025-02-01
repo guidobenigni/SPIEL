@@ -23,6 +23,7 @@
     }
 }
 
+/* Grundlegendes Layout */
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     margin: 0;
@@ -35,14 +36,15 @@ body {
     min-height: 100vh;
 }
 
+/* Header */
 header {
     background-color: var(--header-background);
     box-shadow: 0 2px 4px var(--shadow);
     padding: 10px 20px;
-    border-radius: 12px;
-    margin: 20px 0;
-    width: 90%;
-    max-width: 800px;
+    width: 100%;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
 }
 
 nav ul {
@@ -50,10 +52,11 @@ nav ul {
     margin: 0;
     padding: 0;
     display: flex;
+    justify-content: center;
 }
 
 nav ul li {
-    margin-right: 20px;
+    margin: 0 15px;
 }
 
 nav ul li a {
@@ -62,28 +65,24 @@ nav ul li a {
     font-weight: 500;
     padding: 8px 16px;
     border-radius: 8px;
-    transition: background-color 0.3s ease, transform 0.2s ease;
+    transition: background-color 0.3s ease;
 }
 
 nav ul li a:hover {
     background-color: var(--active-background);
-    transform: scale(1.05);
 }
 
 nav ul li a.active {
     background-color: var(--active-background);
     border: 1px solid var(--active-border);
-    box-shadow: 0 2px 4px var(--shadow);
 }
 
+/* Hauptinhalt */
 main {
     padding: 20px;
     width: 90%;
     max-width: 800px;
-}
-
-.hidden {
-    display: none;
+    margin-top: 20px;
 }
 
 section {
@@ -93,9 +92,24 @@ section {
     box-shadow: 0 2px 4px var(--shadow);
     margin: 20px 0;
     animation: fadeIn 0.5s ease-in-out;
-    width: 100%;
 }
 
+section h1 {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+section p {
+    font-size: 16px;
+    color: var(--text);
+    opacity: 0.8;
+}
+
+.hidden {
+    display: none;
+}
+
+/* Animationen */
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -105,15 +119,4 @@ section {
         opacity: 1;
         transform: translateY(0);
     }
-}
-
-h1 {
-    font-size: 24px;
-    margin-bottom: 10px;
-}
-
-p {
-    font-size: 16px;
-    color: var(--text);
-    opacity: 0.8;
 }
