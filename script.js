@@ -3,8 +3,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const sections = document.querySelectorAll('main section');
     const API_KEY = 'QS58IEEF80QDBT3Y'; // 🔑 Dein API-Schlüssel
 
-    // Standardmäßig erste Sektion anzeigen
-    sections[0].classList.remove('hidden');
+    // Erstelle einen Fehlerbereich und füge ihn dem Dokument hinzu
+    const errorMessageEl = document.createElement('div');
+    errorMessageEl.id = 'error-message';
+    errorMessageEl.style.display = 'none';
+    errorMessageEl.style.color = 'red';
+    errorMessageEl.style.marginTop = '20px';
+    document.body.appendChild(errorMessageEl);
+
+    // Standardmäßig die erste Sektion anzeigen
+    if (sections.length > 0) sections[0].classList.remove('hidden');
 
     // Menü-Interaktion
     links.forEach(link => {
@@ -20,13 +28,14 @@ document.addEventListener('DOMContentLoaded', function() {
             links.forEach(link => link.classList.remove('active'));
             this.classList.add('active');
 
-            // Watchlist laden
+            // Watchlist laden, falls angeklickt
             if (targetId === 'watchlist') loadWatchlist();
         });
     });
 
     // Watchlist laden
     async function loadWatchlist() {
+        // Alle Symbole, wie ursprünglich verwendet
         const stocks = [
             // S&P 500
             { symbol: 'AAPL', name: 'Apple' },
@@ -47,7 +56,7 @@ document.addEventListener('DOMContentLoaded', function() {
             { symbol: 'ALV', name: 'Allianz' },
             // CAC 40
             { symbol: 'AIR', name: 'Airbus' },
-            { symbol: 'OR', name: 'L\'Oréal' },
+            { symbol: 'OR', name: "L'Oréal" },
             { symbol: 'MC', name: 'LVMH' },
             { symbol: 'SAN', name: 'Sanofi' },
             { symbol: 'BNP', name: 'BNP Paribas' },
@@ -65,24 +74,28 @@ document.addEventListener('DOMContentLoaded', function() {
             { symbol: 'VOE', name: 'Voestalpine' }
         ];
 
+        // Fehlerbereich zurücksetzen und Tabelle leeren
+        hideError();
         const watchlistBody = document.querySelector('#watchlist-table tbody');
-        watchlistBody.innerHTML = ''; // Tabelle leeren
+        watchlistBody.innerHTML = '';
 
-        // Warteschlange für API-Aufrufe (5 pro Minute)
+        // Erstelle eine Warteschlange für API-Aufrufe
         const queue = [];
         let isProcessing = false;
 
-        for (const stock of stocks) {
-            queue.push(() => processStock(stock));
-        }
+        // Füge alle Aufgaben (API-Aufrufe) der Warteschlange hinzu
+        stocks.forEach(stock => {
+            queue.push(() => processStock(stock, watchlistBody));
+        });
 
         processQueue();
 
+        // Verarbeitet die Aufgaben aus der Warteschlange mit einer Pause von 12 Sekunden zwischen den Aufrufen
         async function processQueue() {
             if (isProcessing || queue.length === 0) return;
             isProcessing = true;
 
-            // 5 Aufrufe pro Minute (12 Sekunden Pause zwischen jedem Aufruf)
+            // Bis zu 5 API-Aufrufe pro Durchgang (also ca. 1 pro 12 Sekunden)
             for (let i = 0; i < 5 && queue.length > 0; i++) {
                 const task = queue.shift();
                 await task();
@@ -93,10 +106,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (queue.length > 0) processQueue();
         }
 
-        async function processStock(stock) {
+        // Verarbeitet ein einzelnes Symbol
+        async function processStock(stock, tbody) {
             try {
                 const rsi = await getRSI(stock.symbol);
-                if (rsi >= 25 && rsi <= 35) { // RSI zwischen 25-35
+                // Filter: Zeige nur, wenn der RSI zwischen 25 und 35 liegt
+                if (rsi >= 25 && rsi <= 35) {
                     const row = `
                         <tr>
                             <td>${stock.symbol}</td>
@@ -104,28 +119,47 @@ document.addEventListener('DOMContentLoaded', function() {
                             <td>${rsi.toFixed(2)}</td>
                         </tr>
                     `;
-                    watchlistBody.innerHTML += row;
+                    tbody.innerHTML += row;
                 }
             } catch (error) {
-                console.error(`Fehler bei ${stock.symbol}:`, error.message || error);
+                showError(`Fehler bei ${stock.symbol}: ${error.message || error}`);
             }
         }
     }
 
-    // RSI aus API abrufen (5 Jahre = 260 Wochen)
+    // Ruft den RSI-Wert von der API ab (RSI über 260 Wochen)
     async function getRSI(symbol) {
-        const response = await fetch(
-            `https://www.alphavantage.co/query?function=RSI&symbol=${symbol}&interval=weekly&time_period=260&series_type=close&apikey=${API_KEY}`
-        );
+        const url = `https://www.alphavantage.co/query?function=RSI&symbol=${symbol}&interval=weekly&time_period=260&series_type=close&apikey=${API_KEY}`;
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP-Fehler: ${response.status}`);
+        }
         const data = await response.json();
 
-        // Überprüfen, ob Daten vorhanden sind
+        // Überprüfen, ob die erwarteten RSI-Daten vorhanden sind
         if (!data || !data['Technical Analysis: RSI']) {
             throw new Error(`Keine RSI-Daten für ${symbol}`);
         }
 
-        // Neuesten RSI-Wert extrahieren
-        const latestDate = Object.keys(data['Technical Analysis: RSI'])[0];
+        // Extrahiere den neuesten RSI-Wert
+        const dates = Object.keys(data['Technical Analysis: RSI']);
+        if (dates.length === 0) {
+            throw new Error(`Keine RSI-Daten für ${symbol}`);
+        }
+        const latestDate = dates[0];
         return parseFloat(data['Technical Analysis: RSI'][latestDate].RSI);
+    }
+
+    // Zeige eine Fehlermeldung im Fehlerbereich an
+    function showError(message) {
+        console.error(message);
+        errorMessageEl.style.display = 'block';
+        errorMessageEl.textContent = message;
+    }
+
+    // Verstecke den Fehlerbereich
+    function hideError() {
+        errorMessageEl.style.display = 'none';
+        errorMessageEl.textContent = '';
     }
 });
