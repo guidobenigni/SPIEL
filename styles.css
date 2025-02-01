@@ -12,7 +12,7 @@
 
 @media (prefers-color-scheme: dark) {
     :root {
-        --background: #000000; /* Echtes Schwarz für OLED */
+        --background: #000000;
         --text: #ffffff;
         --header-background: #1c1c1e;
         --section-background: #1c1c1e;
@@ -81,7 +81,7 @@ nav ul li a.active {
 main {
     padding: 20px;
     width: 90%;
-    max-width: 800px;
+    max-width: 1200px;
     margin-top: 20px;
 }
 
@@ -107,6 +107,24 @@ section p {
 
 .hidden {
     display: none;
+}
+
+/* Tabelle */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+
+th {
+    background-color: var(--header-background);
+    font-weight: 600;
 }
 
 /* Animationen */
