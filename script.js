@@ -14,6 +14,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     section.classList.add('hidden');
                 }
             });
+
+            links.forEach(link => link.classList.remove('active'));
+            this.classList.add('active');
         });
     });
 });
